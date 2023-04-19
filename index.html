@@ -1,1 +1,42 @@
-Hello World
+Jason Cheung (jcheung2)
+Li-Wei Chi (lchi)
+
+15-618 Project Milestone
+
+Title: Accelerating RRT*
+URL: jcheungcmu.github.io
+
+Updated schedule
+~04/23
+Add multi-threading baseline that locks the entire kd tree
+Jason
+04/24~04/27
+Implement atomic insert into the kd tree 
+Li-Wei
+04/28~04/30
+Implement lock-free rewiring 
+Jason
+05/01~05/04
+Data collection, presentation prep and demo prep
+Jason/Li-Wei
+
+
+
+What we’ve done
+We were able to run profilers on the workload and identify critical bottlenecks (i.e. find nearest neighbors). The original implementation spends 90% of runtime in finding nearest neighbors, after we used a smarter data structure, we were able to reduce that to 9% of the runtime, and the resulting implementation runs an order of magnitude faster.
+
+
+
+Discusses about different data structures suitable for the task of finding nearest neighbors. We have thought about quadtree, since we have already implemented it in a previous project, but decided that kd-tree is more suitable.
+We took a kd-tree implementation and wrote an insert function to fit our application.
+We were able to have a visualization using SFML working (shown below).
+
+
+
+
+We are on track with the schedule in our proposal. We successfully optimized the baseline with a kd-tree and will soon have results with a naive locking scheme. In our proposal, we stated that we will explore locking schemes to enable parallel access to the kd-tree (such as hand-over-hand locking), but since points are boundlessly added to the tree, the overhead could be high. Therefore, we have taken interest in exploring lock-free methods. The lock-free methods still enable parallelism and we expect to achieve the same goals as before.
+
+At the poster session, we plan to demo our project with a live visualizer of the path planning algorithm (as shown above). We will also show graphs comparing the speedup we achieve compared to the baseline serial implementation. 
+
+We are most concerned about whether the rewiring optimization of RRT* can be done in a lock-free manner. The rewiring optimization updates the cost and parent of a node, so it may need a double compare and swap.
+
