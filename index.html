@@ -63,16 +63,52 @@
                 </tr>
             </table>
 		</section>
+        <section id="algorithm">
+            <h2>Algorithm</h2>
+            <p>The algorithm can be broken down into the following steps: <br />
+            - 1. Add the starting node to the tree <br />
+            Loop until a path is found between the start node and end node <br />
+                - Sample a random point in the configuration space <br />
+                - Find the closest point p_closest in the tree to the randomly sampled point that is not blocked by an obstacle <br />
+                - From the closest point, jump a distance d towards the sampled point to obtain a new point p0 that is inserted into the tree. <br />
+                - Insert an edge between the closest point and p0. <br />
+            Although RRT will find a path from the start to end node, the path is usually unoptimal compared to the shortest possible path. RRT* optimizes the path of the RRT algorithm by “rewiring” the tree.
+            Before step 5 of RRT, RRT* introduces the following steps: <br />
+
+            - Find the set P of nearby points within a fixed radius of the new point p0  <br />
+            - Find the point p_shortest in P that has the shortest path from the start node  <br />
+                If cost(p_shortest) < cost(p_closest), insert an edge between pi and p0
+            - For each point pi in P, check to see if their costs can be reduced by a path from p0. If so, rewire the parent of pi to p0.
+
+            </p>
+
+        </section>
 		<section id="Our Approach">
 			<h2>Features</h2>
-			<ul>
-				<li>Change 1: We were able to run profilers on the workload and identify critical bottlenecks (i.e. find nearest neighbors). The original implementation spends 90% of runtime in finding nearest neighbors, after we used a smarter data structure, we were able to reduce that to 9% of the runtime, and the resulting implementation runs an order of magnitude faster. Discusses about different data structures suitable for the task of finding nearest neighbors. We have thought about quadtree, since we have already implemented it in a previous project, but decided that kd-tree is more suitable. We took a kd-tree implementation and wrote an insert function to fit our application.
-                We were able to have a visualization using SFML working (shown below).</li>
-				<li>We are on track with the schedule in our proposal. We successfully optimized the baseline with a kd-tree and will soon have results with a naive locking scheme. In our proposal, we stated that we will explore locking schemes to enable parallel access to the kd-tree (such as hand-over-hand locking), but since points are boundlessly added to the tree, the overhead could be high. Therefore, we have taken interest in exploring lock-free methods. The lock-free methods still enable parallelism and we expect to achieve the same goals as before.</li>
-				<li>At the poster session, we plan to demo our project with a live visualizer of the path planning algorithm (as shown above). We will also show graphs comparing the speedup we achieve compared to the baseline serial implementation. 
-                
-                We are most concerned about whether the rewiring optimization of RRT* can be done in a lock-free manner. The rewiring optimization updates the cost and parent of a node, so it may need a double compare and swap.</li>
-			</ul>
+			<p>
+                We start with a serial RRT and RRT* implementation from <a href="https://github.com/nikhilchandak/Rapidly-Exploring-Random-Trees"</a>nikhilchandak/Rapidly-Exploring-Random-Trees: C++ implementation of RRT and its variants (robotics algorithms used in motion planning)</a>.
+
+                We use this starter code because it uses the SFML library to visualize the path in real time. This visualization is the primary demo of our project. Since our project requires SFML, we target our own machines (Mac M1). 
+
+                We first profiled the base implementation and found that the bottleneck of the implementation was in the nearest / range neighbor search of the tree. The base implementation stores the nodes of the tree using vectors.
+
+                A node has the following fields: a pointer to a Point(x,y), a pointer to a parent node, and the node’s cost, which is the cost of the path from the start node to this node. 
+
+                To find the nearest neighbor and range nearby neighbors in the tree, the algorithm exhaustively loops through all of the points. This is extremely costly as the tree grows. 
+
+                To speed up nearest/range neighbor search, we modify the implementation to use a kdtree. Kdtrees have O(log(n)) nearest neighbor query time. We found a kdtree implementation from <a href="https://github.com/cdalitz/kdtree-cpp">cdalitz/kdtree-cpp: Kd-Tree library for kNN and range queries in plain C++98</a> that supports these operations. However, this implementation did not support insertion into the tree, so we wrote the insertion function ourselves. 
+
+                The insertion was trickier than expected and took a few days to get right. A kdtree is similar to a binary tree, but each level of the tree partitions space along a different dimension. In our 2D case, each level alternates between splitting along the x dimension and then y dimension. If the node to insert is greater than the value along the cut dimension of the parent node, then it is inserted to the right, otherwise it is inserted to the left. The spatial bounds of the node must also be maintained correctly for correct nearest neighbor queries. Nearest neighbor queries works by traversing the tree and checking that the space partitioned by the node overlap overlaps with a circle centered at the new point whose radius is the kth nearest neighbor or specified range query. If the node does not overlap, the entire subtree does not overlap, so not all nodes need to be searched. By using the existing code as a golden reference, we were able to ensure correctness of a single threaded RRT and RRT* with a kdtree. 
+
+                Next, our plan to parallelize the single threaded solution was to allow multiple threads to update the tree simultaneously. Multiple points are simultaneously sampled and inserted and rewired into the tree. Nodes cannot be deleted once they are added to the tree. 
+
+                We thought about using hand-over-hand locking but ultimately decided that the memory requirement could be high since nodes are continuously added to the tree. Instead, we implemented lock-free insertion and rewiring. 
+
+                To atomically insert a new leaf node into the tree, we use compare_exchange to check if the child of the parent is nullptr before swapping with the new node. If the compare_exchange fails, we traverse to the newly added node and try again. 
+
+                Rewiring involves atomically updating the parent pointer and the cost of the node. Since there is no double compare and swap function, we create a struct to hold these fields and call compare_exchange on the structs. If two threads attempt to modify the same node, then the thread that fails will try again. The thread that rewires to the shortest path will have the final update.
+
+            </p>
 		</section>
 		<section id="screenshots">
 			<h2>Screenshots</h2>
