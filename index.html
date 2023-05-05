@@ -1,42 +1,92 @@
-Jason Cheung (jcheung2)
-Li-Wei Chi (lchi)
-
-15-618 Project Milestone
-
-Title: Accelerating RRT*
-URL: jcheungcmu.github.io
-
-Updated schedule
-~04/23
-Add multi-threading baseline that locks the entire kd tree
-Jason
-04/24~04/27
-Implement atomic insert into the kd tree 
-Li-Wei
-04/28~04/30
-Implement lock-free rewiring 
-Jason
-05/01~05/04
-Data collection, presentation prep and demo prep
-Jason/Li-Wei
-
-
-
-What we’ve done
-We were able to run profilers on the workload and identify critical bottlenecks (i.e. find nearest neighbors). The original implementation spends 90% of runtime in finding nearest neighbors, after we used a smarter data structure, we were able to reduce that to 9% of the runtime, and the resulting implementation runs an order of magnitude faster.
-
-
-
-Discusses about different data structures suitable for the task of finding nearest neighbors. We have thought about quadtree, since we have already implemented it in a previous project, but decided that kd-tree is more suitable.
-We took a kd-tree implementation and wrote an insert function to fit our application.
-We were able to have a visualization using SFML working (shown below).
-
-
-
-
-We are on track with the schedule in our proposal. We successfully optimized the baseline with a kd-tree and will soon have results with a naive locking scheme. In our proposal, we stated that we will explore locking schemes to enable parallel access to the kd-tree (such as hand-over-hand locking), but since points are boundlessly added to the tree, the overhead could be high. Therefore, we have taken interest in exploring lock-free methods. The lock-free methods still enable parallelism and we expect to achieve the same goals as before.
-
-At the poster session, we plan to demo our project with a live visualizer of the path planning algorithm (as shown above). We will also show graphs comparing the speedup we achieve compared to the baseline serial implementation. 
-
-We are most concerned about whether the rewiring optimization of RRT* can be done in a lock-free manner. The rewiring optimization updates the cost and parent of a node, so it may need a double compare and swap.
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Project Presentation</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+	<header>
+		<h2>Parallel RRT* with KD-Tree</h2>
+	    <p>Jason Cheung (jcheung2), Li-Wei Chi (lchi)</p>
+	</header>
+	<main>
+		<section id="overview">
+			<p>RRT(*) is a commonly used path planning algorithm used in robotics to find a solution that starts at point A in the
+            configuration space and ends at point B in the configuration space. The RRT* algrithm is an optimization on top of the
+            RRT algorithm by rewiring paths of the tree to make the paths more optimized. In this project, we explore the possibility
+            of speeding up an exisitng solution of RRT that we found online, which has a naive implementation both in data structure
+            used for the problem and the runtime, which builds the tree sequentially. We were able to achieve significant speed up
+            across different maps with multi-threading using OpenMP and learned a lot about profiling, using atomics, and adopting 
+            an existing code base in our solution.</p>
+            <table>
+                <tr>
+                    <th>
+                        Proposed Date
+                    </th>
+                    <th>
+                        Task to complete
+                    </th>
+                </tr>
+                <tr>
+                    <td>
+                        ~04/23
+                    </td>
+                    <td>
+                        Add multi-threading baseline that locks the entire kd tree
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        04/24~04/27
+                    </td>
+                    <td>
+                        Implement atomic insert into the kd tree 
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        04/28~04/30
+                    </td>
+                    <td>
+                        Implement lock-free rewiring 
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        05/01~05/04
+                    </td>
+                    <td>
+                        Data collection, presentation prep and demo prep
+                    </td> 
+                </tr>
+            </table>
+		</section>
+		<section id="Our Approach">
+			<h2>Features</h2>
+			<ul>
+				<li>Change 1: We were able to run profilers on the workload and identify critical bottlenecks (i.e. find nearest neighbors). The original implementation spends 90% of runtime in finding nearest neighbors, after we used a smarter data structure, we were able to reduce that to 9% of the runtime, and the resulting implementation runs an order of magnitude faster. Discusses about different data structures suitable for the task of finding nearest neighbors. We have thought about quadtree, since we have already implemented it in a previous project, but decided that kd-tree is more suitable. We took a kd-tree implementation and wrote an insert function to fit our application.
+                We were able to have a visualization using SFML working (shown below).</li>
+				<li>We are on track with the schedule in our proposal. We successfully optimized the baseline with a kd-tree and will soon have results with a naive locking scheme. In our proposal, we stated that we will explore locking schemes to enable parallel access to the kd-tree (such as hand-over-hand locking), but since points are boundlessly added to the tree, the overhead could be high. Therefore, we have taken interest in exploring lock-free methods. The lock-free methods still enable parallelism and we expect to achieve the same goals as before.</li>
+				<li>At the poster session, we plan to demo our project with a live visualizer of the path planning algorithm (as shown above). We will also show graphs comparing the speedup we achieve compared to the baseline serial implementation. 
+                
+                We are most concerned about whether the rewiring optimization of RRT* can be done in a lock-free manner. The rewiring optimization updates the cost and parent of a node, so it may need a double compare and swap.</li>
+			</ul>
+		</section>
+		<section id="screenshots">
+			<h2>Screenshots</h2>
+			<img src="map1.png" alt="map 1">
+			<img src="map2.png" alt="map 2">
+			<img src="map3.png" alt="map 3">
+		</section>
+		<section id="Github">
+			<a href="https://github.com/lchi021497/Rapidly-Exploring-Random-Trees">github repo</a>
+		</section>
+	</main>
+	<footer>
+		<p>&copy; 2023 Project Name. All rights reserved.</p>
+	</footer>
+</body>
+</html>
 
